@@ -19,6 +19,9 @@ jobs:
         run: |
           git fetch --force --tags
 
+      - name: Print env vars
+        run: printenv
+
       - name: Setup Go
         uses: actions/setup-go@v6
         with:
