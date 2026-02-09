@@ -49,8 +49,9 @@ jobs:
       - name: Prep deps
         run: make build-dep
 
-      - name: Build binaries
-        run: make build
+      # 'make build' is an upstream target not suitable for us
+      - name: Build binary
+        run: make redis_exporter
 
       - name: Build
         run: make dpkg
