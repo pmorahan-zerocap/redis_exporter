@@ -122,6 +122,9 @@ ETCDIR:=$(DESTDIR)/etc
 
 DEB?=$(shell find . -name "*.deb" -print -quit)
 
+NEXUS_CREDS?="Invalid:Creds"
+NEXUS_URL?=https://nexus1.be.nynx.me/repository/apt-unstable/
+
 install:
 	mkdir -p $(INSTALLDIR)
 	## no config file for this?
@@ -146,3 +149,12 @@ dpkg:
 	dch --create --empty --package $(PACKAGE) -v ${VERSION}-0 --no-auto-nmu local package Auto Build
 	dpkg-buildpackage -rfakeroot -us -uc
 	mv ../*.deb ./
+
+.PHONY: deploy
+deploy:
+	curl \
+	    -u "$(NEXUS_CREDS)" \
+	    -H "Content-Type: multipart/form-data" \
+	    --fail \
+	    --data-binary @$(DEB) \
+	    $(NEXUS_URL)

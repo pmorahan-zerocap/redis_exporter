@@ -60,3 +60,48 @@ jobs:
         with:
           name: packages-dpkg
           path: "*.deb"
+
+  upload_release:
+    name: Upload Release Assets
+    needs:
+      - package_dpkg
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Fix Checkout
+        run: |
+          git fetch --force --tags
+
+      - name: Get Tag Type
+        id: get_tagtype
+        run: |
+          TYPE=$(git cat-file -t $GITHUB_REF || echo UNKNOWN)
+          echo "TAGTYPE=$TYPE" >> $GITHUB_OUTPUT
+          echo ==========
+          echo REF=$GITHUB_REF
+          echo TAGTYPE=$TYPE
+
+      - name: Fetch all Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Upload Assets to Release
+        if: steps.get_tagtype.outputs.TAGTYPE == 'tag'
+        uses: softprops/action-gh-release@v1
+        with:
+          prerelease: true
+          files: |
+            artifacts/packages-dpkg/*.deb
+
+      - name: Upload Assets to Nexus
+        if: github.ref == 'refs/heads/main'
+        run: |
+          make deploy NEXUS_CREDS="${{ vars.NEXUS1_RW_USERNAME }}:${{ secrets.NEXUS1_RW_PASSWORD }}"
+
